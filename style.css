@@ -1,0 +1,72 @@
+html {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+}
+body {
+	background-color: #A5BFDD;
+	font-size: 12px;
+	font-family: Arial, Helvetica, sans-serif;
+	margin: 0;
+	padding: 0;
+	color: #000000;
+	width: 100%;
+}
+body h1 {
+	text-align: center;
+	color: #FFFFFF;
+	font-size: 28px;
+	text-shadow: 2px 2px 2px #333;
+}
+#worldchart_canvas {
+	width: 85%;
+	height: 580px;
+	margin: 0 auto;
+	position: relative;
+	z-index: 1;
+}
+#tags_container {
+	display: none;
+	background-color: #FFF;
+	width: 60%;
+	height: 550px;
+	top: 5em;
+	position: absolute;
+	z-index: 99;
+	opacity: 0.9;
+	filter:alpha(opacity=0.9);
+	left: 50%;
+    margin-left: -30%;
+    -moz-border-radius: 150px;
+    border-radius: 150px;
+    -moz-box-shadow: 10px 10px 5px #333;
+    -webkit-box-shadow: 10px 10px 5px #333;
+    box-shadow: 10px 10px 5px #333;
+}
+#tags_canvas {
+	width: 90%;
+	height: 100%;
+	left: 50%;
+    margin-left: -45%;
+	position: absolute;
+}
+.tags_canvas_back {
+	background: url('images/spinner.gif') no-repeat center center;
+}
+#close_button_container {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 16px;
+	height: 16px;
+}
+#close_button_container a, #close_button_container a:active, #close_button_container a:visited {
+	width: 100%;
+	height: 100%;
+	font-size: 2em;
+	text-decoration: none;
+	color: #000;
+}
+#close_button_container a:hover {
+	color: #FFF;
+}
