@@ -1,14 +1,5 @@
-/*
- * to-do
- * ------------
- * -namjestit klice po redu
- * -stavit geonames load itd na kraj, nakon ca se sve izvede
- * -napravit provjeru dali postoje podaci?
- * -for example, check indonesia? why's there no data?
- */
-
 google.load('visualization', '1', {
-	'packages' : ['geochart'] //geochart - package name
+	'packages' : ['geochart']
 });
 google.load("visualization", "1", {
 	packages : ['corechart']
@@ -24,11 +15,14 @@ $(function () {
 	var georegiondata;
 	var all_countries = [];
 	
-	$.getJSON("http://api.geonames.org/countryInfoJSON?username=dperic", function(data) {
-		for(var i = 0; i < data.geonames.length; i++) {
-			if(parseInt(data.geonames[i].population) > 100000)
-				all_countries.push([data.geonames[i].countryName.toString(), parseInt(data.geonames[i].population)]);
-		}
+	$.when(
+		$.getJSON("http://api.geonames.org/countryInfoJSON?username=dperic", function(data) {
+			for(var i = 0; i < data.geonames.length; i++) {
+				if(parseInt(data.geonames[i].population) > 100000)
+					all_countries.push([data.geonames[i].countryName.toString(), parseInt(data.geonames[i].population)]);
+			}
+		})
+	).then(function() {
 		drawWorldMap();
 	});
 	
@@ -70,43 +64,38 @@ $(function () {
 	
 	function getSelectedCountry() {
 		var selectedItem = geoworldchart.getSelection()[0];
-		var selectedCountry = geoworlddata.getValue(selectedItem.row, 0).toLowerCase();
+		var selectedCountry = geoworlddata.getValue(selectedItem.row, 0);
 		
 		$('#tags_canvas').addClass('tags_canvas_back');
+		$(".tags_canvas_back").css({ "background" : "url('images/spinner.gif') no-repeat center center" });
+		$(".tags_canvas_back").attr("title", "");
 		$('#worldchart_canvas').css('z-index', '-1');
 		$('#tags_container').show();
 		
-		window.setTimeout(drawTagsMap(selectedCountry), 50);
+		getTagsData(selectedCountry);
 	}
-	
-	//only Firefox?
-	/*cancelEvent = function() {
-		if (document.addEventListener) {
-			document.addEventListener('mousemove', show, false);
-		} else {
-    		document.attachEvent('onmousemove', show);
-  		}
-	}*/
 
-	function drawTagsMap(country) {
+	function getTagsData(country) {
 		var top10artists = [];
 		var listenerstotal = 0;
 		var toptags = {};
-		var toptagsfiltered = [];
 			
 		//$.getJSON("http://ws.audioscrobbler.com/2.0/?method=geo.gettopartists&country="+ country +"&api_key="+ lastfmapi +"&limit=500&format=json", function(artists) {
-		var url = "http://ws.audioscrobbler.com/2.0/?method=geo.gettopartists&country="+ country +"&api_key="+ lastfmapi +"&limit=500&format=json";
+		var url = "http://ws.audioscrobbler.com/2.0/?method=geo.gettopartists&country="+ country.toLowerCase() +"&api_key="+ lastfmapi +"&limit=500&format=json";
 		$.ajax({
 			url: url,
-			async: false,
 			dataType: 'json',
 			success: function (artists) {
 				for (var i=0; i<10; i++) {
+					if (!artists.topartists) {
+						drawTagsChart();
+						return;
+					}
 					top10artists.push(artists.topartists.artist[i].name);
 				}
 				
-				//artists.topartists.artist.length	
-				for (var i=0; i<50; i++) {
+				tagsnumber = 50;
+				for (var i=0; i<tagsnumber; i++) {
 					var currentartist = artists.topartists.artist[i].name;
 					var currentlisteners = parseInt(artists.topartists.artist[i].listeners);
 					var url = "http://ws.audioscrobbler.com/2.0/?method=artist.gettoptags&artist="+ currentartist +"&autocorrect=1&api_key="+ lastfmapi +"&format=json";
@@ -115,7 +104,6 @@ $(function () {
 						{
 							$.ajax({
 								url: url,
-								async: false,
 								dataType: 'json',
 								success: function (tags) {
 									var tagname = tags.toptags.tag[0].name;
@@ -125,19 +113,30 @@ $(function () {
 									} else {
 										toptags[tagname] = {'listenerstotal':currentlisteners, 'artists':[{'name':artists.topartists.artist[i].name, 'listeners':currentlisteners}]};
 									}
+
+									if (i == (tagsnumber-1))
+										drawTagsChart(toptags, listenerstotal, country);
 								}
 							});
 						}
 					)(i);
 				}
-				
-				$.each(toptags, function (key, value) {
-					toptagsfiltered.push([key, parseInt((value.listenerstotal/listenerstotal)*100)]);
-				});	
-				//$(toptagsfiltered).sort(function(a,b) { return parseInt(a.genre) - parseInt(b.genre); } )
 			}
+		})
+	}
+
+	function drawTagsChart(toptags, listenerstotal, country) {
+		if (!toptags) {
+			$(".tags_canvas_back").css({ "background" : "url('images/exclamation.png') no-repeat center center" });
+			$(".tags_canvas_back").attr("title", "no data");
+			return;
+		}
+
+		var toptagsfiltered = [];
+		$.each(toptags, function (key, value) {
+			toptagsfiltered.push([key, parseInt((value.listenerstotal/listenerstotal)*100)]);
 		});
-		
+
 		var data = new google.visualization.DataTable();
 		data.addColumn('string', 'Genre');
 		data.addColumn('number', 'Percentage');
@@ -151,8 +150,8 @@ $(function () {
 			title : country,
 			is3D : 'true'
 		};
-		
-		var chart = new google.visualization.PieChart(document.getElementById('tags_canvas'));
+
+		var chart = new google.visualization.PieChart(document.getElementById("tags_canvas"));
 		chart.draw(data, options);
 	}
 });

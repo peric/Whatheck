@@ -50,9 +50,6 @@ body h1 {
     margin-left: -45%;
 	position: absolute;
 }
-.tags_canvas_back {
-	background: url('images/spinner.gif') no-repeat center center;
-}
 #close_button_container {
 	position: absolute;
 	top: 0;
